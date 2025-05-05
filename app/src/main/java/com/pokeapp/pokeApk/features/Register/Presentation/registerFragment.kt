@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -29,6 +30,8 @@ class RegisterFragment : Fragment() {
     private lateinit var passwordEditText: TextInputEditText
     private lateinit var btnRegister: Button
     private lateinit var redLogin: TextView
+    private lateinit var progressBar: ProgressBar
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,6 +50,7 @@ class RegisterFragment : Fragment() {
         passwordEditText = view.findViewById(R.id.password)
         btnRegister = view.findViewById(R.id.registerButton)
         redLogin = view.findViewById(R.id.tvHaveAccount)
+        progressBar = view.findViewById(R.id.progressBar)
 
         return view
     }
@@ -86,6 +90,8 @@ class RegisterFragment : Fragment() {
                 inpConfirmPassword.error = "Las contraseñas no coinciden"
                 return@setOnClickListener
             }
+            //iniciar el progreso
+            progressBar.visibility = View.VISIBLE
             // Armar el objeto de usuario
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->
@@ -117,8 +123,8 @@ class RegisterFragment : Fragment() {
                         }
                         Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     }
+                    progressBar.visibility = View.GONE
                 }
-
 
         }
         //logica para cuando se presiona el texto de tengo cuenta

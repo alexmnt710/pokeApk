@@ -2,8 +2,8 @@
     <string name="app_name">Poke App</string>
 <!-- Login   -->
     <string name="login_title">Iniciar Sesión</string>
-    <string name="login_user_title">Usuario</string>
-    <string name="login_username_hint">Ingrese su usuario</string>
+    <string name="login_user_title">Correo</string>
+    <string name="login_username_hint">Ingrese su correo electronico</string>
     <string name="login_password_title">Contraseña</string>
     <string name="login_password_hint">Ingrese su contraseña</string>
     <string name="login_button">Iniciar Sesión</string>

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -24,6 +25,7 @@ class LoginFragment : Fragment() {
     private lateinit var btnLogin : Button
     private lateinit var redRegister : TextView
     private lateinit var auth: FirebaseAuth
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,6 +43,7 @@ class LoginFragment : Fragment() {
         passwordEditText = view.findViewById(R.id.passwordEditText)
         btnLogin = view.findViewById(R.id.loginButton)
         redRegister = view.findViewById(R.id.tvNoAccount)
+        progressBar = view.findViewById(R.id.progressBar)
 
         return view
     }
@@ -66,6 +69,8 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            //iniciar el progreso
+            progressBar.visibility = View.VISIBLE
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
@@ -77,7 +82,10 @@ class LoginFragment : Fragment() {
                         // Error en el inicio de sesión
                         Toast.makeText(context, "Error al iniciar sesión: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                     }
+                    //detener el progreso
+                    progressBar.visibility = View.GONE
                 }
+
 
         }
         //logica para cuando se presiona el texto de no tengo cuenta
