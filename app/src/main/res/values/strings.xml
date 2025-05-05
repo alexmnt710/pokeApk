@@ -12,7 +12,7 @@
     <string name="register_title">Registro</string>
     <string name="register_user_title">Usuario</string>
     <string name="register_username_hint">Ingrese su usuario</string>
-    <string name="register_email_title">Correo Electronic</string>
+    <string name="register_email_title">Correo Electrónico</string>
     <string name="register_email_hint">Ingrese su correo electrónico</string>
     <string name="register_password_title">Contraseña</string>
     <string name="register_password_hint">Ingrese su contraseña</string>
