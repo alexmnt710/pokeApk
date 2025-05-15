@@ -99,7 +99,8 @@ class RegisterFragment : Fragment() {
                         val uid = auth.currentUser?.uid
                         val userMap = hashMapOf(
                             "username" to username,
-                            "email" to email
+                            "email" to email,
+
                         )
 
                         uid?.let {

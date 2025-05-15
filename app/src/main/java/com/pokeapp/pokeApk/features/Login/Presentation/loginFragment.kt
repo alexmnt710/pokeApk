@@ -1,7 +1,9 @@
 package com.pokeapp.pokeApk.features.Login.Presentation
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,11 +12,19 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.pokeapp.R
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
+import com.pokeapp.pokeApk.data.localDatabase.model.User
+import com.pokeapp.pokeApk.features.global.obtenerIdToken
+import com.pokeapp.pokeApk.features.global.obtenerNombreDeUsuario
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class LoginFragment : Fragment() {
 
@@ -76,14 +86,34 @@ class LoginFragment : Fragment() {
                     if (task.isSuccessful) {
                         // Inicio de sesión exitoso
                         Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                        // guardar el usuario que retorne firebase en la base de datos local
+                        val user = auth.currentUser
+                        val email = user?.email
+                        val uid = user?.uid
+
+                        lifecycleScope.launch {
+                            val nombreDeUsuario = obtenerNombreDeUsuario()
+                            val token = obtenerIdToken()
+
+                            val User = User (
+                                uid = uid.toString(),
+                                email = email,
+                                username = nombreDeUsuario,
+                                token = token
+                            )
+                            val db = AppDatabase.getInstance(requireContext())
+                            db.usuarioDao().insertUser(User)
+                        }
+                        progressBar.visibility = View.GONE
                         // Navegar a la pantalla principal o realizar otra acción
                         findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                     } else {
                         // Error en el inicio de sesión
+                        progressBar.visibility = View.GONE
                         Toast.makeText(context, "Error al iniciar sesión: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                     }
                     //detener el progreso
-                    progressBar.visibility = View.GONE
+
                 }
 
 
