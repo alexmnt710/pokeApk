@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,11 @@ class MainActivity : AppCompatActivity() {
                 val tokenValido = validarToken(user.token)
                 if (tokenValido) {
                     // Navegar al HomeFragment
-                    navController.navigate(R.id.homeFragment)
+                    navController.navigate(R.id.homeFragment, null,
+                        NavOptions.Builder()
+                            .setPopUpTo(R.id.loginFragment, true)
+                            .build()
+                    )
                 } else {
                     // Token inválido, eliminar usuario y navegar al LoginFragment
                     withContext(Dispatchers.IO) {
@@ -53,11 +58,19 @@ class MainActivity : AppCompatActivity() {
                         "Sesión expirada. Por favor, inicia sesión nuevamente.",
                         Toast.LENGTH_LONG
                     ).show()
-                    navController.navigate(R.id.loginFragment)
+                    navController.navigate(R.id.loginFragment,null,
+                        navOptions = NavOptions.Builder()
+                            .setPopUpTo(R.id.homeFragment, true)
+                            .build()
+                    )
                 }
             } else {
                 // No hay usuario, navegar al LoginFragment
-                navController.navigate(R.id.loginFragment)
+                navController.navigate(R.id.loginFragment,null,
+                    navOptions = NavOptions.Builder()
+                        .setPopUpTo(R.id.homeFragment, true)
+                        .build()
+                    )
             }
         }
     }

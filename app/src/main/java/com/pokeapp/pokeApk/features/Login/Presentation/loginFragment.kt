@@ -110,13 +110,7 @@ class LoginFragment : Fragment() {
 
                             withContext(Dispatchers.Main) {
                                 progressBar.visibility = View.GONE
-                                findNavController().navigate(
-                                    R.id.action_loginFragment_to_homeFragment,
-                                    null,
-                                    NavOptions.Builder()
-                                        .setPopUpTo(R.id.loginFragment, true)
-                                        .build()
-                                )
+                                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                             }
                         }
                     } else {

@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.pokeapp.R
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
@@ -69,7 +70,11 @@ class HomeFragment : Fragment() {
                     }
                     // Aquí puedes agregar la lógica para redirigir al usuario a la pantalla de inicio de sesión
                     Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-                    findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+                    findNavController().navigate(R.id.action_homeFragment_to_loginFragment,null,
+                        navOptions = NavOptions.Builder()
+                            .setPopUpTo(R.id.homeFragment, true)
+                            .build()
+                    )
                 }
 
             }
