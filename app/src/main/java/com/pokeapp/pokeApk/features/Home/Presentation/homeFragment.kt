@@ -32,7 +32,13 @@ class HomeFragment : Fragment() {
 
         super.onViewCreated(view, savedInstanceState)
         btnLogout = view.findViewById(R.id.btnLogout)
-        tvUser = view.findViewById(R.id.tvUserInfo)
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Inicializar la vista
+        tvUser = requireView().findViewById(R.id.tvUserInfo)
         // Acceder a la base de datos en un hilo de fondo
         lifecycleScope.launch {
             val user = withContext(Dispatchers.IO) {
@@ -56,7 +62,7 @@ class HomeFragment : Fragment() {
                 Log.d("User", "No se encontró ningún usuario en la base de datos local.")
             }
 
-        btnLogout.setOnClickListener {
+            btnLogout.setOnClickListener {
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
                         AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
@@ -66,9 +72,8 @@ class HomeFragment : Fragment() {
                     findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
                 }
 
-        }
+            }
 
         }
     }
-
 }

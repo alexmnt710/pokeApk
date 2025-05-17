@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.pokeapp.R
 import com.google.android.material.textfield.TextInputEditText
@@ -23,8 +24,10 @@ import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
 import com.pokeapp.pokeApk.data.localDatabase.model.User
 import com.pokeapp.pokeApk.features.global.obtenerIdToken
 import com.pokeapp.pokeApk.features.global.obtenerNombreDeUsuario
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class LoginFragment : Fragment() {
 
@@ -95,18 +98,27 @@ class LoginFragment : Fragment() {
                             val nombreDeUsuario = obtenerNombreDeUsuario()
                             val token = obtenerIdToken()
 
-                            val User = User (
+                            val user = User(
                                 uid = uid.toString(),
                                 email = email,
                                 username = nombreDeUsuario,
                                 token = token
                             )
                             val db = AppDatabase.getInstance(requireContext())
-                            db.usuarioDao().insertUser(User)
+                            db.usuarioDao().insertUser(user)
+                            Log.d("LoginFragment", "Usuario insertado: $user")
+
+                            withContext(Dispatchers.Main) {
+                                progressBar.visibility = View.GONE
+                                findNavController().navigate(
+                                    R.id.action_loginFragment_to_homeFragment,
+                                    null,
+                                    NavOptions.Builder()
+                                        .setPopUpTo(R.id.loginFragment, true)
+                                        .build()
+                                )
+                            }
                         }
-                        progressBar.visibility = View.GONE
-                        // Navegar a la pantalla principal o realizar otra acción
-                        findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                     } else {
                         // Error en el inicio de sesión
                         progressBar.visibility = View.GONE
