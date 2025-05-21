@@ -19,3 +19,4 @@ suspend fun obtenerIdToken(): String? {
     val user = FirebaseAuth.getInstance().currentUser
     return user?.getIdToken(true)?.await()?.token
 }
+

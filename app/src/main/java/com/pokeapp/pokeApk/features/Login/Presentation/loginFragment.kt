@@ -88,7 +88,6 @@ class LoginFragment : Fragment() {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         // Inicio de sesión exitoso
-                        Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                         // guardar el usuario que retorne firebase en la base de datos local
                         val user = auth.currentUser
                         val email = user?.email
@@ -107,7 +106,7 @@ class LoginFragment : Fragment() {
                             val db = AppDatabase.getInstance(requireContext())
                             db.usuarioDao().insertUser(user)
                             Log.d("LoginFragment", "Usuario insertado: $user")
-
+                            Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                             withContext(Dispatchers.Main) {
                                 progressBar.visibility = View.GONE
                                 findNavController().navigate(R.id.action_loginFragment_to_homeFragment)

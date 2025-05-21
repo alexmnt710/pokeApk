@@ -10,11 +10,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
