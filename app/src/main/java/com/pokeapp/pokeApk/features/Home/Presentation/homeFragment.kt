@@ -3,81 +3,92 @@ package com.pokeapp.pokeApk.features.Home.Presentation
 import PokemonAdapter
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
+import android.view.*
+import android.widget.ImageButton
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
 import com.example.pokeapp.R
 import com.pokeapp.pokeApk.core.services.NetworkModule
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
-import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
 import com.pokeapp.pokeApk.data.repository.PokeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HomeFragment : Fragment() {
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: PokemonAdapter
+    private lateinit var btnUserMenu: ImageButton
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false)
-
     }
-    lateinit var btnLogout : Button
-    lateinit var tvUser: TextView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: PokemonAdapter
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
         super.onViewCreated(view, savedInstanceState)
-        btnLogout = view.findViewById(R.id.btnLogout)
-
+        recyclerView = view.findViewById(R.id.rvPokemons)
+        btnUserMenu = view.findViewById(R.id.btnUserMenu)
+        adapter = PokemonAdapter()
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = adapter
     }
 
     override fun onStart() {
         super.onStart()
 
-        // Inicializar la vista
-        tvUser = requireView().findViewById(R.id.tvUserInfo)
-        recyclerView = requireView().findViewById(R.id.rvPokemons)
-        adapter = PokemonAdapter()
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
-        // Acceder a la base de datos en un hilo de fondo
         lifecycleScope.launch {
             val user = withContext(Dispatchers.IO) {
                 AppDatabase.getInstance(requireContext()).usuarioDao().getUser()
             }
 
-            // Verificar si se obtuvo un usuario
             if (user != null) {
                 Log.d("User", "Username: ${user.username}")
                 Log.d("User", "Email: ${user.email}")
-                Log.d("User", "Token: ${user.token}")
-                Log.d("User", "UID: ${user.uid}")
-                // Mostrar la información del usuario en la vista
-                val tvUserContent = """
-                    Nombre de usuario: ${user.username}
-                    Correo electrónico: ${user.email}
-                    UID: ${user.uid}
-                """.trimIndent()
-                tvUser.text = tvUserContent
+
+                btnUserMenu.setOnClickListener {
+                    val popupMenu = PopupMenu(requireContext(), btnUserMenu)
+                    popupMenu.menuInflater.inflate(R.menu.user_menu, popupMenu.menu)
+
+                    // Personalizar con datos del usuario
+                    popupMenu.menu.findItem(R.id.item_username).title = "Usuario: ${user.username}"
+                    popupMenu.menu.findItem(R.id.item_email).title = "Correo: ${user.email}"
+
+                    popupMenu.setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.item_logout -> {
+                                lifecycleScope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
+                                    }
+                                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                                    findNavController().navigate(
+                                        R.id.action_homeFragment_to_loginFragment, null,
+                                        NavOptions.Builder().setPopUpTo(R.id.homeFragment, true).build()
+                                    )
+                                }
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+
+                    popupMenu.show()
+                }
+
                 val retrofit = NetworkModule.provideRetrofit(NetworkModule.provideOkHttp())
                 val api = NetworkModule.providePokeApi(retrofit)
                 val db = AppDatabase.getInstance(requireContext())
-                val repo       = PokeRepository(api, db.pokemonDao())
+                val repo = PokeRepository(api, db.pokemonDao())
 
                 try {
                     withContext(Dispatchers.IO) {
@@ -95,7 +106,7 @@ class HomeFragment : Fragment() {
                                 repo.getPokemon(id)
                             }
 
-                            adapter.addPokemon(pokemon) // <- Aquí se añade visualmente
+                            adapter.addPokemon(pokemon)
                         } catch (e: Exception) {
                             Log.e("Pokemon", "Error con ${item.name}", e)
                         }
@@ -103,28 +114,10 @@ class HomeFragment : Fragment() {
                 } catch (e: Exception) {
                     Log.e("Pokemon", "Error al obtener datos del Pokémon", e)
                 }
+
             } else {
                 Log.d("User", "No se encontró ningún usuario en la base de datos local.")
             }
-
-            btnLogout.setOnClickListener {
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
-                    }
-                    // Aquí puedes agregar la lógica para redirigir al usuario a la pantalla de inicio de sesión
-                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-                    findNavController().navigate(R.id.action_homeFragment_to_loginFragment,null,
-                        navOptions = NavOptions.Builder()
-                            .setPopUpTo(R.id.homeFragment, true)
-                            .build()
-                    )
-                }
-
-            }
-
-
-
         }
     }
 }
