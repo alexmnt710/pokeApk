@@ -5,6 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.pokeapp.pokeApk.core.services.PokeApiService
 import com.pokeapp.pokeApk.data.localDatabase.dao.PokeDao
+import com.pokeapp.pokeApk.data.localDatabase.model.EvolutionChainDto
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -55,6 +56,29 @@ class PokeRepository(
             pagingSourceFactory = { dao.pagingSource() }
         ).flow
     }
+
+    suspend fun puedeEvolucionar(pokemonId: Int): Int? {
+        val species = api.getSpecies(pokemonId)
+        val evolutionChainUrl = species.evolutionChain.url
+        val evolutionId = evolutionChainUrl.trimEnd('/').split("/").last().toInt()
+        val chain = api.getEvolutionChain(evolutionId)
+
+        fun encontrarEvolucion(cadena: EvolutionChainDto.Chain, objetivo: String): EvolutionChainDto.Chain? {
+            if (cadena.species.name == objetivo) return cadena
+            for (rama in cadena.evolvesTo) {
+                val encontrada = encontrarEvolucion(rama, objetivo)
+                if (encontrada != null) return encontrada
+            }
+            return null
+        }
+
+        val speciesDetail = api.getPokemon(pokemonId)
+        val nodo = encontrarEvolucion(chain.chain, speciesDetail.name)
+        val siguiente = nodo?.evolvesTo?.firstOrNull()?.species?.url ?: return null
+
+        return siguiente.trimEnd('/').split("/").last().toInt()
+    }
+
 
 }
 

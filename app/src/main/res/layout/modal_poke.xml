@@ -69,24 +69,38 @@
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
                     android:textColor="?android:textColorSecondary"
-                    android:layout_marginBottom="12dp" />
+                    android:layout_marginBottom="10dp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tipos:"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:textColor="?android:textColorPrimary" />
-
-                <!-- Tipos -->
                 <LinearLayout
-                    android:id="@+id/containerTipos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="12dp" />
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tipos:"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="?android:textColorPrimary"
+                        android:layout_marginEnd="8dp" />
+
+                    <LinearLayout
+                        android:id="@+id/containerTipos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </LinearLayout>
+<!--                Boton para agregarlos a tu equipo-->
+                <Button
+                    android:id="@+id/btnAgregar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="Agregar a mi equipo"
+                    />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

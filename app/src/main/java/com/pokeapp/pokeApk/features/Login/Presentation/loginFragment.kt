@@ -13,14 +13,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.NavOptions
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.example.pokeapp.R
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
+import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
 import com.pokeapp.pokeApk.data.localDatabase.model.User
 import com.pokeapp.pokeApk.features.global.obtenerIdToken
 import com.pokeapp.pokeApk.features.global.obtenerNombreDeUsuario
@@ -39,11 +43,13 @@ class LoginFragment : Fragment() {
     private lateinit var redRegister : TextView
     private lateinit var auth: FirebaseAuth
     private lateinit var progressBar: ProgressBar
+    private lateinit var navController: NavController
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
+
     ): View {
         val view = inflater.inflate(R.layout.fragment_login, container, false)
 
@@ -57,11 +63,53 @@ class LoginFragment : Fragment() {
         btnLogin = view.findViewById(R.id.loginButton)
         redRegister = view.findViewById(R.id.tvNoAccount)
         progressBar = view.findViewById(R.id.progressBar)
+        val navHostFragment = requireActivity().supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+
+        //logica para cuando el usuario ya esta logueado
+        if (auth.currentUser != null) {
+            lifecycleScope.launch {
+                val user = withContext(Dispatchers.IO) {
+                    AppDatabase.getInstance(requireContext()).usuarioDao().getUser()
+                }
+                if (user != null && !user.token.isNullOrEmpty()) {
+                    val tokenValido = validarToken(user.token)
+                    if (tokenValido) {
+                        // Navegar al HomeFragment
+                        navController.navigate(R.id.homeFragment, null,
+                            NavOptions.Builder()
+                                .setPopUpTo(R.id.loginFragment, true)
+                                .build()
+                        )
+                    } else {
+                        // Token inválido, eliminar usuario y navegar al LoginFragment
+                        withContext(Dispatchers.IO) {
+                            AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
+                        }
+                    }
+                }
+            }
+        }
 
         return view
     }
+
+    suspend fun validarToken(token: String): Boolean {
+        val db = FirebaseFirestore.getInstance()
+        return try {
+            val docRef = db.collection("tokens").document(token)
+            val document = docRef.get().await()
+            document.exists()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al validar el token: ${e.message}")
+            false
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
 
         //Se asigna el evento al boton
         btnLogin.setOnClickListener {
@@ -97,21 +145,73 @@ class LoginFragment : Fragment() {
                             val nombreDeUsuario = obtenerNombreDeUsuario()
                             val token = obtenerIdToken()
 
+                            val firestore = FirebaseFirestore.getInstance()
+                            val userDoc = firestore.collection("users").document(uid!!)
+
+                            // Obtener o inicializar farm
+                            val snapshot = userDoc.get().await()
+                            if (!snapshot.contains("farm")) {
+                                val farmInit = mapOf(
+                                    "lastHarvestedAt" to System.currentTimeMillis(),
+                                    "intervaloGeneracion" to 30000L,
+                                    "maxBayas" to 15,
+                                    "bayasActuales" to 0,
+                                    "bayasUsuario" to 0
+                                )
+                                userDoc.set(mapOf("farm" to farmInit), SetOptions.merge()).await()
+                                Log.d("Login", "Sistema de farmeo inicializado.")
+                            } else {
+                                Log.d("Login", "Sistema de farmeo ya existía.")
+                            }
+
+                            // Leer campos farm
+                            val farm = snapshot.get("farm") as? Map<*, *> ?: emptyMap<String, Any>()
+
+                            // Leer equipo desde Firebase
+                            val pokemonesRemotos = snapshot.get("pokemones") as? List<Map<String, Any>> ?: emptyList()
+
+                            val equipo = pokemonesRemotos.map {
+                                PokemonEntity(
+                                    id = (it["id"] as Long).toInt(),
+                                    name = it["name"] as String,
+                                    spriteUrl = it["spriteUrl"] as? String,
+                                    types = (it["types"] as? List<*>)?.mapNotNull { tipo -> tipo?.toString() } ?: emptyList(),
+
+                                    // Añadir campos nuevos:
+                                    nivel = (it["nivel"] as? Long ?: 1L).toInt(),
+                                    exp = (it["exp"] as? Long ?: 0L).toInt(),
+                                    evolucionado = it["evolucionado"] as? Boolean ?: false
+                                )
+                            }
+
                             val user = User(
                                 uid = uid.toString(),
                                 email = email,
                                 username = nombreDeUsuario,
-                                token = token
+                                token = token,
+                                pokemones = equipo,
+                                bayasUsuario = (farm["bayasUsuario"] as? Long ?: 0L).toInt(),
+                                lastHarvestedAt = (farm["lastHarvestedAt"] as? Long ?: System.currentTimeMillis()),
+                                intervaloGeneracion = (farm["intervaloGeneracion"] as? Long ?: 30000L),
+                                maxBayas = (farm["maxBayas"] as? Long ?: 15L).toInt()
                             )
+
                             val db = AppDatabase.getInstance(requireContext())
                             db.usuarioDao().insertUser(user)
+
                             Log.d("LoginFragment", "Usuario insertado: $user")
                             Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+
                             withContext(Dispatchers.Main) {
                                 progressBar.visibility = View.GONE
-                                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+                                navController.navigate(
+                                    R.id.homeFragment, null,
+                                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, true).build()
+                                )
                             }
                         }
+
+
                     } else {
                         // Error en el inicio de sesión
                         progressBar.visibility = View.GONE

@@ -1,6 +1,7 @@
 package com.pokeapp.pokeApk.features.Home.Presentation
 
 import PokemonAdapter
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -10,7 +11,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ProgressBar
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -22,9 +22,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pokeapp.R
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pokeapp.pokeApk.core.services.NetworkModule
+import com.pokeapp.pokeApk.data.localDatabase.dao.userDao
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
+import com.pokeapp.pokeApk.data.localDatabase.model.SimplePokemon
 import com.pokeapp.pokeApk.data.repository.PokeRepository
 import com.pokeapp.pokeApk.util.TypeIconMapper
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +41,6 @@ class HomeFragment : Fragment() {
     private lateinit var btnUserMenu: ImageButton
     private lateinit var pgProgrss : ProgressBar
     private lateinit var btnSeeMore : Button
-    private var selectedPokemon: PokemonEntity? = null
     private var isLoading = false
     private var offset = 0
     private val limit = 20
@@ -63,7 +65,6 @@ class HomeFragment : Fragment() {
         adapter.onSeeMoreClick = { pokemon ->
             mostrarModalDetalle(pokemon)
         }
-
         btnSeeMore = view.findViewById(R.id.btnSeeMore)
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -78,7 +79,81 @@ class HomeFragment : Fragment() {
             }
         })
         pgProgrss = view.findViewById(R.id.progress)
+
+        //logica de redireccionamiento si no hay usuario
+        lifecycleScope.launch {
+            val user = withContext(Dispatchers.IO) {
+                AppDatabase.getInstance(requireContext()).usuarioDao().getUser()
+            }
+
+            if (user == null) {
+                findNavController().navigate(R.id.loginFragment)
+            }
+        }
     }
+
+    suspend fun agregarPokemonConAlerta(
+        context: Context,
+        userDao: userDao,
+        nuevo: PokemonEntity
+    ) {
+        val user = withContext(Dispatchers.IO) {
+            userDao.getUser()
+        }
+
+        if (user == null) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
+        val listaActual = user.pokemones?.toMutableList() ?: mutableListOf()
+
+        if (listaActual.size < 6) {
+            listaActual.add(nuevo)
+            withContext(Dispatchers.IO) {
+                userDao.insertUser(user.copy(pokemones = listaActual))
+            }
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Pokémon agregado", Toast.LENGTH_SHORT).show()
+            }
+            syncPokemonesConFirebase(user.uid, listaActual)
+        } else {
+            withContext(Dispatchers.Main) {
+                AlertDialog.Builder(context)
+                    .setTitle("Límite alcanzado")
+                    .setMessage("Ya tienes 6 Pokémon. ¿Deseas reemplazar al primero con este nuevo?")
+                    .setPositiveButton("Sí") { _, _ ->
+                        lifecycleScope.launch {
+                            withContext(Dispatchers.IO) {
+                                listaActual.removeAt(0)
+                                listaActual.add(nuevo)
+                                userDao.insertUser(user.copy(pokemones = listaActual))
+
+                                val usuario = withContext(Dispatchers.IO) {
+                                    userDao.getUser()
+                                }
+
+                                Log.d("Usuario", "Pokémon del usuario:")
+                                usuario?.pokemones?.forEachIndexed { index, p ->
+                                    Log.d("Usuario", "${index + 1}. ${p.name} (id: ${p.id})")
+                                }
+                                syncPokemonesConFirebase(user.uid, listaActual)
+
+                            }
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Pokémon reemplazado", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
+            }
+        }
+    }
+
+
 
     private fun loadMorePokemons() {
         isLoading = true
@@ -117,6 +192,31 @@ class HomeFragment : Fragment() {
                 isLoading = false
             }
         }
+    }
+
+    fun syncPokemonesConFirebase(userId: String, pokemones: List<PokemonEntity>) {
+        val firestore = FirebaseFirestore.getInstance()
+
+        val listaFirebase = pokemones.map {
+            SimplePokemon(
+                id = it.id,
+                name = it.name,
+                spriteUrl = it.spriteUrl,
+                types = it.types
+            )
+        }
+
+        val updateData = mapOf("pokemones" to listaFirebase)
+
+        firestore.collection("users")
+            .document(userId)
+            .update(updateData)
+            .addOnSuccessListener {
+                Log.d("Firebase", "Pokémon del usuario actualizados correctamente.")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Error al actualizar pokemones", e)
+            }
     }
 
     override fun onStart() {
@@ -162,6 +262,30 @@ class HomeFragment : Fragment() {
 
                     popupMenu.show()
                 }
+                val btnPokemon = view?.findViewById<ImageButton>(R.id.btnPokeball)
+                btnPokemon?.setOnClickListener {
+                    findNavController().navigate(R.id.teamFragment)
+                }
+                val btnLevel = view?.findViewById<ImageButton>(R.id.btnLevel)
+                btnLevel?.setOnClickListener {
+                    val popupMenu = PopupMenu(requireContext(), btnLevel)
+                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
+                    popupMenu.setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.item_farm -> {
+                                findNavController().navigate(R.id.farmFragment)
+                                true
+                            }
+                            R.id.item_movs -> {
+                                findNavController().navigate(R.id.movsFragment)
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                    popupMenu.show()
+                }
+
 
                 val retrofit = NetworkModule.provideRetrofit(NetworkModule.provideOkHttp())
                 val api = NetworkModule.providePokeApi(retrofit)
@@ -201,8 +325,8 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     private fun mostrarModalDetalle(pokemon: PokemonEntity) {
-        // Cerrar diálogo anterior si está visible
         dialogDetalle?.dismiss()
 
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.modal_poke, null)
@@ -212,10 +336,10 @@ class HomeFragment : Fragment() {
         val descripcion = dialogView.findViewById<TextView>(R.id.txtDescripcion)
         val containerTipos = dialogView.findViewById<LinearLayout>(R.id.containerTipos)
         val btnCerrar = dialogView.findViewById<ImageButton>(R.id.btnCerrar)
+
         btnCerrar.setOnClickListener {
             dialogDetalle?.dismiss()
         }
-
 
         Glide.with(requireContext())
             .load(pokemon.spriteUrl)
@@ -230,7 +354,7 @@ class HomeFragment : Fragment() {
             val icon = ImageView(requireContext())
             icon.setImageResource(iconRes)
 
-            val sizeInDp = 60 // ajusta a un tamaño más pequeño
+            val sizeInDp = 60
             val scale = resources.displayMetrics.density
             val sizeInPx = (sizeInDp * scale + 0.5f).toInt()
 
@@ -241,7 +365,17 @@ class HomeFragment : Fragment() {
             containerTipos.addView(icon)
         }
 
-        // Crear y mostrar el diálogo
+        val db = AppDatabase.getInstance(requireContext())
+        val userDao = db.usuarioDao()
+
+        val btnAgregar = dialogView.findViewById<Button>(R.id.btnAgregar)
+        btnAgregar.setOnClickListener {
+            lifecycleScope.launch {
+                agregarPokemonConAlerta(requireContext(), userDao, pokemon)
+                dialogDetalle?.dismiss()
+            }
+        }
+
         dialogDetalle = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()

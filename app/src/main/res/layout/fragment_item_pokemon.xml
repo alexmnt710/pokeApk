@@ -11,16 +11,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="12dp">
+        <TextView
+            android:id="@+id/txtPokemonId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="ID"
+            android:textSize="16sp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
         <ImageView
             android:id="@+id/imgPokemon"
             android:layout_width="64dp"
             android:layout_height="64dp"
+            android:layout_marginStart="16dp"
             android:contentDescription="Imagen del Pokémon"
             android:src="@drawable/ic_launcher_foreground"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="@id/txtPokemonId"
+            app:layout_constraintStart_toEndOf="@id/txtPokemonId"
+            app:layout_constraintTop_toTopOf="@id/txtPokemonId"
+            app:layout_constraintVertical_bias="0.428" />
 
         <TextView
             android:id="@+id/txtPokemonName"

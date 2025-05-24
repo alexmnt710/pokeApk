@@ -1,6 +1,7 @@
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -17,13 +18,9 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
         pokemons.add(pokemon)
         notifyItemInserted(pokemons.size - 1)
     }
-    fun setPokemons(newList: List<PokemonEntity>) {
-        pokemons.clear()
-        pokemons.addAll(newList)
-        notifyDataSetChanged()
-    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val id : TextView = view.findViewById(R.id.txtPokemonId)
         val name: TextView = view.findViewById(R.id.txtPokemonName)
         val image: ImageView = view.findViewById(R.id.imgPokemon)
         val btnSeeMore : ImageView = view.findViewById(R.id.btnSeeMore)
@@ -37,13 +34,17 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
 
     override fun getItemCount(): Int = pokemons.size
     internal var onSeeMoreClick: ((PokemonEntity) -> Unit)? = null
+    internal var onAgregarClick: ((PokemonEntity) -> Unit)? = null
+
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val pokemon = pokemons[position]
         holder.name.text = pokemon.name.replaceFirstChar { it.uppercaseChar() }
+        holder.id.text = "#${pokemon.id.toString().padStart(3, '0')}"
         Glide.with(holder.image.context)
             .load(pokemon.spriteUrl)
             .into(holder.image)
+
         holder.btnSeeMore.setOnClickListener {
             onSeeMoreClick?.invoke(pokemon)
         }

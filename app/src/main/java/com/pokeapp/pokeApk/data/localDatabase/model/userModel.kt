@@ -10,4 +10,10 @@ data class User(
     val email: String?,
     val username: String?,
     val token : String?,
+    val pokemones: List<PokemonEntity>? = emptyList(),
+    // Campos para farmeo
+    val bayasUsuario: Int = 0,
+    val lastHarvestedAt: Long = System.currentTimeMillis(),
+    val intervaloGeneracion: Long = 30000L,
+    val maxBayas: Int = 15
 )

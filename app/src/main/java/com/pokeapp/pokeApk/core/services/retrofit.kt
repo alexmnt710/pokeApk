@@ -14,18 +14,18 @@ object NetworkModule {
     fun provideOkHttp(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC   // log de URLs
+                level = HttpLoggingInterceptor.Level.BASIC
             })
             .build()
 
     fun provideRetrofit(client: OkHttpClient): Retrofit {
         val moshi = Moshi.Builder()
-            .add(KotlinJsonAdapterFactory()) // 👈 ESTA LÍNEA es la clave
+            .add(KotlinJsonAdapterFactory())
             .build()
 
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create(moshi)) // ✅ pásale el moshi configurado
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(client)
             .build()
     }
