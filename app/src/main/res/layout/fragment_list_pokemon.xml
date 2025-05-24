@@ -11,12 +11,6 @@
         android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
-        <ProgressBar
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
         <ImageView
             android:id="@+id/imgLarge"
             android:layout_width="160dp"
@@ -35,5 +29,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </LinearLayout>
+
 
 </FrameLayout>

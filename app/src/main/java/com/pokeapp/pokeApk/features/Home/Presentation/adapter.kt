@@ -13,13 +13,20 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
     private val pokemons = mutableListOf<PokemonEntity>()
 
     fun addPokemon(pokemon: PokemonEntity) {
+        if (pokemons.any { it.id == pokemon.id }) return
         pokemons.add(pokemon)
         notifyItemInserted(pokemons.size - 1)
+    }
+    fun setPokemons(newList: List<PokemonEntity>) {
+        pokemons.clear()
+        pokemons.addAll(newList)
+        notifyDataSetChanged()
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val name: TextView = view.findViewById(R.id.txtPokemonName)
         val image: ImageView = view.findViewById(R.id.imgPokemon)
+        val btnSeeMore : ImageView = view.findViewById(R.id.btnSeeMore)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -29,6 +36,7 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
     }
 
     override fun getItemCount(): Int = pokemons.size
+    internal var onSeeMoreClick: ((PokemonEntity) -> Unit)? = null
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val pokemon = pokemons[position]
@@ -36,5 +44,9 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
         Glide.with(holder.image.context)
             .load(pokemon.spriteUrl)
             .into(holder.image)
+        holder.btnSeeMore.setOnClickListener {
+            onSeeMoreClick?.invoke(pokemon)
+        }
     }
+
 }
