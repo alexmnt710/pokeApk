@@ -43,6 +43,8 @@ class HomeFragment : Fragment() {
     private var offset = 0
     private val limit = 20
     private var hasMore = true
+    private var dialogDetalle: AlertDialog? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -200,45 +202,52 @@ class HomeFragment : Fragment() {
         }
     }
     private fun mostrarModalDetalle(pokemon: PokemonEntity) {
+        // Cerrar diálogo anterior si está visible
+        dialogDetalle?.dismiss()
+
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.modal_poke, null)
 
         val imageView = dialogView.findViewById<ImageView>(R.id.imgPokemon)
         val nombre = dialogView.findViewById<TextView>(R.id.txtNombre)
         val descripcion = dialogView.findViewById<TextView>(R.id.txtDescripcion)
         val containerTipos = dialogView.findViewById<LinearLayout>(R.id.containerTipos)
+        val btnCerrar = dialogView.findViewById<ImageButton>(R.id.btnCerrar)
+        btnCerrar.setOnClickListener {
+            dialogDetalle?.dismiss()
+        }
 
-        // Cargar imagen oficial
+
         Glide.with(requireContext())
             .load(pokemon.spriteUrl)
             .into(imageView)
 
-        // Mostrar nombre capitalizado
         nombre.text = pokemon.name.replaceFirstChar { it.uppercaseChar() }
-
-        // Descripción (puede venir null si no fue obtenida)
         descripcion.text = pokemon.description ?: "Sin descripción disponible."
 
-        // Cargar tipos con íconos
         containerTipos.removeAllViews()
         pokemon.types?.forEach { tipo ->
             val iconRes = TypeIconMapper.getIconRes(tipo)
             val icon = ImageView(requireContext())
             icon.setImageResource(iconRes)
-            val sizeInDp = 100
+
+            val sizeInDp = 60 // ajusta a un tamaño más pequeño
             val scale = resources.displayMetrics.density
             val sizeInPx = (sizeInDp * scale + 0.5f).toInt()
 
             val params = LinearLayout.LayoutParams(sizeInPx, sizeInPx)
-            params.setMargins(8, 0, 8, 0)
+            params.setMargins(8, 8, 8, 8)
             icon.layoutParams = params
 
             containerTipos.addView(icon)
         }
 
-        AlertDialog.Builder(requireContext())
+        // Crear y mostrar el diálogo
+        dialogDetalle = AlertDialog.Builder(requireContext())
             .setView(dialogView)
-            .setPositiveButton("Cerrar", null)
-            .show()
+            .create()
+
+        dialogDetalle?.show()
     }
+
 
 }
