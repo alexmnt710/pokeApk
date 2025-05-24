@@ -96,22 +96,22 @@ class FarmFragment : Fragment() {
                 btnTeam?.setOnClickListener {
                     findNavController().navigate(R.id.teamFragment)
                 }
-                val btnLevel = view?.findViewById<ImageButton>(R.id.btnLevel)
-                btnLevel?.setOnClickListener {
-                    val popupMenu = PopupMenu(requireContext(), btnLevel)
-                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
-                    popupMenu.setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.item_movs -> {
-                                findNavController().navigate(R.id.movsFragment)
-                                true
-                            }
-
-                            else -> false
-                        }
-                    }
-                    popupMenu.show()
-                }
+//                val btnLevel = view?.findViewById<ImageButton>(R.id.btnLevel)
+//                btnLevel?.setOnClickListener {
+//                    val popupMenu = PopupMenu(requireContext(), btnLevel)
+//                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
+//                    popupMenu.setOnMenuItemClickListener { item ->
+//                        when (item.itemId) {
+//                            R.id.item_movs -> {
+//                                findNavController().navigate(R.id.movsFragment)
+//                                true
+//                            }
+//
+//                            else -> false
+//                        }
+//                    }
+//                    popupMenu.show()
+//                }
 
             }
         }

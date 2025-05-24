@@ -268,22 +268,23 @@ class HomeFragment : Fragment() {
                 }
                 val btnLevel = view?.findViewById<ImageButton>(R.id.btnLevel)
                 btnLevel?.setOnClickListener {
-                    val popupMenu = PopupMenu(requireContext(), btnLevel)
-                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
-                    popupMenu.setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.item_farm -> {
-                                findNavController().navigate(R.id.farmFragment)
-                                true
-                            }
-                            R.id.item_movs -> {
-                                findNavController().navigate(R.id.movsFragment)
-                                true
-                            }
-                            else -> false
-                        }
-                    }
-                    popupMenu.show()
+                    findNavController().navigate(R.id.farmFragment)
+//                    val popupMenu = PopupMenu(requireContext(), btnLevel)
+//                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
+//                    popupMenu.setOnMenuItemClickListener { item ->
+//                        when (item.itemId) {
+//                            R.id.item_farm -> {
+//                                findNavController().navigate(R.id.farmFragment)
+//                                true
+//                            }
+//                            R.id.item_movs -> {
+//                                findNavController().navigate(R.id.movsFragment)
+//                                true
+//                            }
+//                            else -> false
+//                        }
+//                    }
+//                    popupMenu.show()
                 }
 
 

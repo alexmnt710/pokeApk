@@ -101,6 +101,7 @@
                     android:backgroundTint="?attr/colorPrimary"
                     android:text="Agregar a mi equipo"
                     />
+
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

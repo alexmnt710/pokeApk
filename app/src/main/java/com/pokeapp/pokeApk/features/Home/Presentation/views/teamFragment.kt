@@ -1,6 +1,5 @@
 package com.pokeapp.pokeApk.features.Home.Presentation.views
 
-import PokemonAdapter
 import TeamAdapter
 import android.os.Bundle
 import android.util.Log
@@ -20,7 +19,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pokeapp.R
@@ -29,7 +27,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.pokeapp.pokeApk.core.services.NetworkModule
 import com.pokeapp.pokeApk.data.localDatabase.database.AppDatabase
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
-import com.pokeapp.pokeApk.data.localDatabase.model.SimplePokemon
 import com.pokeapp.pokeApk.data.repository.PokeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +37,8 @@ import kotlinx.coroutines.withContext
 class TeamFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: TeamAdapter
+    private lateinit var txtEmptyTeam: TextView
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -50,6 +49,8 @@ class TeamFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val btnUserMenu = view.findViewById<ImageButton>(R.id.btnUserMenu)
+        txtEmptyTeam = view.findViewById(R.id.txtEmptyTeam)
+
 
         lifecycleScope.launch {
             val user = withContext(Dispatchers.IO) {
@@ -100,19 +101,20 @@ class TeamFragment : Fragment() {
                 }
                 val btnLevel = view?.findViewById<ImageButton>(R.id.btnLevel)
                 btnLevel?.setOnClickListener {
-                    val popupMenu = PopupMenu(requireContext(), btnLevel)
-                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
-                    popupMenu.setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.item_farm -> {
-                                findNavController().navigate(R.id.farmFragment)
-                                true
-                            }
-
-                            else -> false
-                        }
-                    }
-                    popupMenu.show()
+                    findNavController().navigate(R.id.farmFragment)
+//                    val popupMenu = PopupMenu(requireContext(), btnLevel)
+//                    popupMenu.menuInflater.inflate(R.menu.nav_menu, popupMenu.menu)
+//                    popupMenu.setOnMenuItemClickListener { item ->
+//                        when (item.itemId) {
+//                            R.id.item_farm -> {
+//                                findNavController().navigate(R.id.farmFragment)
+//                                true
+//                            }
+//
+//                            else -> false
+//                        }
+//                    }
+//                    popupMenu.show()
                 }
 
             }
@@ -122,6 +124,7 @@ class TeamFragment : Fragment() {
         adapter = TeamAdapter { pokemon ->
             mostrarOffcanvas(pokemon)
         }
+
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.adapter = adapter
 
@@ -131,6 +134,7 @@ class TeamFragment : Fragment() {
                 val dao = AppDatabase.getInstance(requireContext()).usuarioDao()
                 dao.getUser()?.pokemones ?: emptyList()
             }
+            txtEmptyTeam.visibility = if (pokemones.isEmpty()) View.VISIBLE else View.GONE
 
             val user = withContext(Dispatchers.IO) {
                 AppDatabase.getInstance(requireContext()).usuarioDao().getUser()
@@ -144,7 +148,6 @@ class TeamFragment : Fragment() {
             adapter.submitList(pokemones)
         }
 
-
     }
     private suspend fun recargarEquipoDesdeRoom() {
         val pokemones = withContext(Dispatchers.IO) {
@@ -152,7 +155,7 @@ class TeamFragment : Fragment() {
         }
         adapter.submitList(pokemones)
     }
-    private fun mostrarOffcanvas(pokemon: PokemonEntity) {
+    private fun mostrarOffcanvas(pokemonInicial: PokemonEntity) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.modal_team_pokemon, null)
         val imageView = dialogView.findViewById<ImageView>(R.id.imgAnimatedPokemon)
         val txtNivel = dialogView.findViewById<TextView>(R.id.txtNivel)
@@ -164,18 +167,21 @@ class TeamFragment : Fragment() {
         val userDao = db.usuarioDao()
         val firestore = FirebaseFirestore.getInstance()
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val idOriginal = pokemonInicial.id
 
         val pokeRepository = PokeRepository(
             NetworkModule.providePokeApi(NetworkModule.provideRetrofit(NetworkModule.provideOkHttp())),
             db.pokemonDao()
         )
 
+        var pokemonActual = pokemonInicial.copy()
+        var nivel = pokemonActual.nivel
+        var exp = pokemonActual.exp
+
         Glide.with(requireContext()).asGif()
-            .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemon.id}.gif")
+            .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonActual.id}.gif")
             .into(imageView)
 
-        var nivel = pokemon.nivel
-        var exp = pokemon.exp
         txtNivel.text = "Nivel: $nivel"
         progress.progress = exp
 
@@ -189,6 +195,12 @@ class TeamFragment : Fragment() {
             } catch (e: Exception) {
                 txtBayasDisponibles.text = "Error al cargar bayas"
             }
+            val user = withContext(Dispatchers.IO) {
+                userDao.getUser()
+            }
+            val indexEnEquipo = user?.pokemones?.indexOfFirst {
+                it.id == pokemonInicial.id && it.nivel == pokemonInicial.nivel && it.exp == pokemonInicial.exp
+            } ?: -1
 
             btnAlimentar.setOnClickListener {
                 if (bayas <= 0) {
@@ -208,86 +220,70 @@ class TeamFragment : Fragment() {
                     progress.progress = 0
 
                     lifecycleScope.launch {
-                        val evoId = pokeRepository.puedeEvolucionar(pokemon.id)
-                        if (evoId != null && !pokemon.evolucionado) {
+                        val evoId = pokeRepository.puedeEvolucionar(pokemonActual.id)
+                        if (evoId != null) {
                             val nuevoPokemon = pokeRepository.getPokemon(evoId)
 
-                            val user = withContext(Dispatchers.IO) {
-                                userDao.getUser()
-                            }
-
-                            val nuevaLista = user?.pokemones?.map {
-                                if (it.id == pokemon.id) {
-                                    nuevoPokemon.copy(nivel = nivel, exp = exp, evolucionado = true)
-                                } else it
-                            } ?: emptyList()
-
-                            withContext(Dispatchers.IO) {
-                                userDao.insertUser(user!!.copy(pokemones = nuevaLista))
-                            }
-
-                            firestore.collection("users")
-                                .document(userId)
-                                .update(
-                                    mapOf(
-                                        "farm.bayasUsuario" to bayas,
-                                        "pokemones" to nuevaLista.map {
-                                            mapOf(
-                                                "id" to it.id,
-                                                "name" to it.name,
-                                                "spriteUrl" to it.spriteUrl,
-                                                "types" to it.types,
-                                                "nivel" to it.nivel,
-                                                "exp" to it.exp,
-                                                "evolucionado" to it.evolucionado
-                                            )
-                                        }
-                                    )
+                            if (nuevoPokemon.id == pokemonActual.id) {
+                                pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
+                                Toast.makeText(requireContext(), "¡${pokemonActual.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                pokemonActual = nuevoPokemon.copy(
+                                    nivel = nivel,
+                                    exp = exp,
+                                    evolucionado = true
                                 )
 
+                                Glide.with(requireContext()).asGif()
+                                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonActual.id}.gif")
+                                    .into(imageView)
 
-                            Glide.with(requireContext()).asGif()
-                                .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${nuevoPokemon.id}.gif")
-                                .into(imageView)
-
-                            recargarEquipoDesdeRoom()
-                            Toast.makeText(requireContext(), "¡${nuevoPokemon.name} ha evolucionado!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), "¡${pokemonActual.name} ha evolucionado!", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
+                            Toast.makeText(requireContext(), "¡${pokemonActual.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
                         }
 
-                        else {
-                            recargarEquipoDesdeRoom()
-                            Toast.makeText(requireContext(), "¡${pokemon.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
-                        }
+                        guardarEnLocalYFirebase(
+                            actualizado = pokemonActual,
+                            userDao = userDao,
+                            firestore = firestore,
+                            userId = userId,
+                            index = indexEnEquipo,
+                            bayas = bayas
+                        )
+                    }
+                } else {
+                    lifecycleScope.launch {
+                        pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
+                        guardarEnLocalYFirebase(
+                            actualizado = pokemonActual,
+                            userDao = userDao,
+                            firestore = firestore,
+                            userId = userId,
+                            index = indexEnEquipo,
+                            bayas = bayas
+                        )
                     }
                 }
+            }
 
-                // Actualizar experiencia y bayas
-                lifecycleScope.launch {
-                    val user = withContext(Dispatchers.IO) { userDao.getUser() }
-                    val listaActualizada = user?.pokemones?.map {
-                        if (it.id == pokemon.id) {
-                            it.copy(nivel = nivel, exp = exp)
-                        } else it
-                    } ?: emptyList()
-
-                    withContext(Dispatchers.IO) {
-                        userDao.insertUser(user!!.copy(pokemones = listaActualizada))
-                    }
-
-                    firestore.collection("users").document(userId).update(
-                        "farm.bayasUsuario", bayas,
-                        "pokemones", listaActualizada.map {
-                            mapOf(
-                                "id" to it.id,
-                                "name" to it.name,
-                                "spriteUrl" to it.spriteUrl,
-                                "types" to it.types,
-                                "nivel" to it.nivel,
-                                "exp" to it.exp,
-                                "evolucionado" to it.evolucionado
-                            )
+            val btnEliminar = dialogView.findViewById<Button>(R.id.btnEliminar)
+            btnEliminar.setOnClickListener {
+                if (indexEnEquipo != -1) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("¿Eliminar Pokémon?")
+                        .setMessage("¿Estás seguro de que quieres eliminar a ${pokemonInicial.name} de tu equipo?")
+                        .setPositiveButton("Sí") { _, _ ->
+                            lifecycleScope.launch {
+                                eliminarPokemonDeEquipo(userDao, firestore, userId, indexEnEquipo, bayas)
+                            }
                         }
-                    )
+                        .setNegativeButton("No", null)
+                        .show()
+                } else {
+                    Toast.makeText(requireContext(), "No se pudo eliminar", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -297,8 +293,87 @@ class TeamFragment : Fragment() {
             .create()
             .show()
     }
+    private suspend fun eliminarPokemonDeEquipo(
+        userDao: com.pokeapp.pokeApk.data.localDatabase.dao.userDao,
+        firestore: FirebaseFirestore,
+        userId: String,
+        index: Int,
+        bayas: Int
+    ) {
+        val user = withContext(Dispatchers.IO) {
+            userDao.getUser()
+        }
+
+        val listaActualizada = user?.pokemones?.toMutableList()
+        listaActualizada?.removeAt(index)
+
+        withContext(Dispatchers.IO) {
+            userDao.insertUser(user!!.copy(pokemones = listaActualizada ?: listOf()))
+        }
+
+        firestore.collection("users").document(userId).update(
+            mapOf(
+                "farm.bayasUsuario" to bayas,
+                "pokemones" to listaActualizada?.map {
+                    mapOf(
+                        "id" to it.id,
+                        "name" to it.name,
+                        "spriteUrl" to it.spriteUrl,
+                        "types" to it.types,
+                        "nivel" to it.nivel,
+                        "exp" to it.exp,
+                        "evolucionado" to it.evolucionado
+                    )
+                }
+            )
+        )
+
+        recargarEquipoDesdeRoom()
+    }
 
 
+
+    private suspend fun guardarEnLocalYFirebase(
+        actualizado: PokemonEntity,
+        userDao: com.pokeapp.pokeApk.data.localDatabase.dao.userDao,
+        firestore: FirebaseFirestore,
+        userId: String,
+        index: Int,
+        bayas: Int
+    ) {
+        val user = withContext(Dispatchers.IO) {
+            userDao.getUser()
+        }
+
+        val listaActualizada = user?.pokemones?.toMutableList() ?: mutableListOf()
+
+        if (index in listaActualizada.indices) {
+            listaActualizada[index] = actualizado
+        }
+
+        withContext(Dispatchers.IO) {
+            userDao.insertUser(user!!.copy(pokemones = listaActualizada))
+        }
+
+        firestore.collection("users").document(userId).update(
+            mapOf(
+                "farm.bayasUsuario" to bayas,
+                "pokemones" to listaActualizada.map {
+                    mapOf(
+                        "id" to it.id,
+                        "name" to it.name,
+                        "spriteUrl" to it.spriteUrl,
+                        "types" to it.types,
+                        "nivel" to it.nivel,
+                        "exp" to it.exp,
+                        "evolucionado" to it.evolucionado
+                    )
+                }
+            )
+        )
+
+        recargarEquipoDesdeRoom()
+    }
 
 
 
