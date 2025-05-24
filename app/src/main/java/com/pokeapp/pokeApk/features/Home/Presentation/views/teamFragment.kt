@@ -268,6 +268,11 @@ class TeamFragment : Fragment() {
                     }
                 }
             }
+            val modalDialog = AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create()
+
+            modalDialog.show()
 
             val btnEliminar = dialogView.findViewById<Button>(R.id.btnEliminar)
             btnEliminar.setOnClickListener {
@@ -278,6 +283,13 @@ class TeamFragment : Fragment() {
                         .setPositiveButton("Sí") { _, _ ->
                             lifecycleScope.launch {
                                 eliminarPokemonDeEquipo(userDao, firestore, userId, indexEnEquipo, bayas)
+                                modalDialog.dismiss()
+
+                                // Verificar si ya no hay pokemones
+                                val pokemones = withContext(Dispatchers.IO) {
+                                    AppDatabase.getInstance(requireContext()).usuarioDao().getUser()?.pokemones ?: emptyList()
+                                }
+                                txtEmptyTeam.visibility = if (pokemones.isEmpty()) View.VISIBLE else View.GONE
                             }
                         }
                         .setNegativeButton("No", null)
@@ -286,12 +298,10 @@ class TeamFragment : Fragment() {
                     Toast.makeText(requireContext(), "No se pudo eliminar", Toast.LENGTH_SHORT).show()
                 }
             }
+
         }
 
-        AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-            .show()
+
     }
     private suspend fun eliminarPokemonDeEquipo(
         userDao: com.pokeapp.pokeApk.data.localDatabase.dao.userDao,
