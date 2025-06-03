@@ -12,7 +12,12 @@
           "package_name": "com.example.pokeapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "373410219668-4g15qkv3fkd3de2p7h0k3s27a3g98b9l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAIV3MaBfEmPFaaf4NpW7rpNwOtH9iEGlo"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "373410219668-4g15qkv3fkd3de2p7h0k3s27a3g98b9l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

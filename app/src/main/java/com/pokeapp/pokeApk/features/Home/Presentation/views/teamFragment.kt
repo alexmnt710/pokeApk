@@ -220,29 +220,36 @@ class TeamFragment : Fragment() {
                     progress.progress = 0
 
                     lifecycleScope.launch {
-                        val evoId = pokeRepository.puedeEvolucionar(pokemonActual.id)
-                        if (evoId != null) {
-                            val nuevoPokemon = pokeRepository.getPokemon(evoId)
+                        try {
+                            val evoId = pokeRepository.puedeEvolucionar(pokemonActual.id)
+                            if (evoId != null) {
+                                val nuevoPokemon = pokeRepository.getPokemon(evoId)
 
-                            if (nuevoPokemon.id == pokemonActual.id) {
+                                if (nuevoPokemon.id == pokemonActual.id) {
+                                    pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
+                                    Toast.makeText(requireContext(), "¡${pokemonActual.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    pokemonActual = nuevoPokemon.copy(
+                                        nivel = nivel,
+                                        exp = exp,
+                                        evolucionado = true
+                                    )
+                                    Glide.with(requireContext()).asGif()
+                                        .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonActual.id}.gif")
+                                        .into(imageView)
+
+                                    Toast.makeText(requireContext(), "¡${pokemonActual.name} ha evolucionado!", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
                                 pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
                                 Toast.makeText(requireContext(), "¡${pokemonActual.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                pokemonActual = nuevoPokemon.copy(
-                                    nivel = nivel,
-                                    exp = exp,
-                                    evolucionado = true
-                                )
-
-                                Glide.with(requireContext()).asGif()
-                                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonActual.id}.gif")
-                                    .into(imageView)
-
-                                Toast.makeText(requireContext(), "¡${pokemonActual.name} ha evolucionado!", Toast.LENGTH_SHORT).show()
                             }
-                        } else {
-                            pokemonActual = pokemonActual.copy(nivel = nivel, exp = exp)
-                            Toast.makeText(requireContext(), "¡${pokemonActual.name} ha subido de nivel!", Toast.LENGTH_SHORT).show()
+                        } catch (e: retrofit2.HttpException) {
+                            Log.e("Evolucion", "Error HTTP al intentar evolucionar: ${e.code()}")
+                            Toast.makeText(requireContext(), "No se pudo evolucionar: ${pokemonActual.name}", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Log.e("Evolucion", "Error inesperado: ${e.localizedMessage}")
+                            Toast.makeText(requireContext(), "Error inesperado en evolución", Toast.LENGTH_SHORT).show()
                         }
 
                         guardarEnLocalYFirebase(

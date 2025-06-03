@@ -5,12 +5,15 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ProgressBar
+import androidx.appcompat.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -31,8 +34,10 @@ import com.pokeapp.pokeApk.data.localDatabase.model.SimplePokemon
 import com.pokeapp.pokeApk.data.repository.PokeRepository
 import com.pokeapp.pokeApk.util.TypeIconMapper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 class HomeFragment : Fragment() {
 
@@ -46,6 +51,7 @@ class HomeFragment : Fragment() {
     private val limit = 20
     private var hasMore = true
     private var dialogDetalle: AlertDialog? = null
+    private var currentJob: Job? = null
 
 
     override fun onCreateView(
@@ -59,9 +65,41 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = view.findViewById(R.id.rvPokemons)
         btnUserMenu = view.findViewById(R.id.btnUserMenu)
+        val searchView = view.findViewById<SearchView>(R.id.searchView)
+        val btnReset = view.findViewById<ImageButton>(R.id.btnReset)
+        val retrofit = NetworkModule.provideRetrofit(NetworkModule.provideOkHttp())
+        val api = NetworkModule.providePokeApi(retrofit)
+        val db = AppDatabase.getInstance(requireContext())
+        val repo = PokeRepository(api, db.pokemonDao())
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                query?.let { searchPokemon(it.lowercase()) }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false // No buscar en tiempo real
+            }
+        })
+
+        btnReset.setOnClickListener {
+            searchView.setQuery("", false)
+            searchView.clearFocus()
+
+            adapter = PokemonAdapter()
+            recyclerView.adapter = adapter
+            adapter.onSeeMoreClick = { pokemon -> mostrarModalDetalle(pokemon) }
+
+            offset = 0
+            hasMore = true
+            loadMorePokemons()
+        }
+
         adapter = PokemonAdapter()
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
+
         adapter.onSeeMoreClick = { pokemon ->
             mostrarModalDetalle(pokemon)
         }
@@ -78,10 +116,12 @@ class HomeFragment : Fragment() {
                 }
             }
         })
+
         pgProgrss = view.findViewById(R.id.progress)
 
         //logica de redireccionamiento si no hay usuario
         lifecycleScope.launch {
+
             val user = withContext(Dispatchers.IO) {
                 AppDatabase.getInstance(requireContext()).usuarioDao().getUser()
             }
@@ -91,6 +131,73 @@ class HomeFragment : Fragment() {
             }
         }
     }
+    private fun searchPokemon(nombre: String) {
+        currentJob?.cancel()
+
+        currentJob = lifecycleScope.launch {
+            try {
+                val repo = PokeRepository(
+                    NetworkModule.providePokeApi(NetworkModule.provideRetrofit(NetworkModule.provideOkHttp())),
+                    AppDatabase.getInstance(requireContext()).pokemonDao()
+                )
+
+                val index = withContext(Dispatchers.IO) {
+                    repo.api.getIndex(100_000).results
+                }
+
+                val coincidencias = index.filter { it.name.contains(nombre) }
+
+                if (coincidencias.isEmpty()) {
+                    Toast.makeText(requireContext(), "Pokémon no encontrado", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                if (coincidencias.size == 1) {
+                    val id = coincidencias.first().url.trimEnd('/').split("/").last().toInt()
+                    val pokemon = withContext(Dispatchers.IO) { repo.getPokemon(id) }
+
+                    reiniciarAdaptador()
+                    adapter.addPokemon(pokemon)
+                    offset = 0
+                    hasMore = false
+                    return@launch
+                }
+
+                // Mostrar diálogo con múltiples opciones
+                val nombres = coincidencias.map { it.name.replace("-", " ").replaceFirstChar { it.uppercaseChar() } }.toTypedArray()
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Elige una variante")
+                    .setItems(nombres) { _, which ->
+                        val elegido = coincidencias[which]
+                        lifecycleScope.launch {
+                            val id = elegido.url.trimEnd('/').split("/").last().toInt()
+                            val pokemon = withContext(Dispatchers.IO) { repo.getPokemon(id) }
+
+                            reiniciarAdaptador()
+                            adapter.addPokemon(pokemon)
+                            offset = 0
+                            hasMore = false
+                        }
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+
+            } catch (e: CancellationException) {
+                Log.w("Search", "Búsqueda cancelada")
+            } catch (e: Exception) {
+                Log.e("Search", "Error buscando Pokémon", e)
+                Toast.makeText(requireContext(), "Error buscando Pokémon", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+    private fun reiniciarAdaptador() {
+        adapter = PokemonAdapter()
+        recyclerView.adapter = adapter
+        adapter.onSeeMoreClick = { pokemon -> mostrarModalDetalle(pokemon) }
+    }
+
 
     suspend fun agregarPokemonConAlerta(
         context: Context,
@@ -156,6 +263,7 @@ class HomeFragment : Fragment() {
 
 
     private fun loadMorePokemons() {
+
         isLoading = true
         lifecycleScope.launch {
             try {
@@ -231,6 +339,9 @@ class HomeFragment : Fragment() {
             if (user != null) {
                 Log.d("User", "Username: ${user.username}")
                 Log.d("User", "Email: ${user.email}")
+                //imagen de perfil
+                Log.d("User", "Profile Image: ${user.profileImage}")
+
 
                 btnUserMenu.setOnClickListener {
                     val popupMenu = PopupMenu(requireContext(), btnUserMenu)

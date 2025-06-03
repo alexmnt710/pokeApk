@@ -93,6 +93,11 @@ dependencies {
 
     implementation ("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01")
+    implementation ("de.hdodenhof:circleimageview:3.1.0")
+    implementation ("com.google.firebase:firebase-storage-ktx:20.3.0")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
+
 
 
 }

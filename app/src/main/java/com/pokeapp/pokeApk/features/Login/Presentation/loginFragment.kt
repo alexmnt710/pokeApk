@@ -150,13 +150,12 @@ class LoginFragment : Fragment() {
 
                             // Obtener o inicializar farm
                             val snapshot = userDoc.get().await()
+                            val profileImageUrl = snapshot.getString("profileImage") ?: ""
                             if (!snapshot.contains("farm")) {
                                 val farmInit = mapOf(
-                                    "lastHarvestedAt" to System.currentTimeMillis(),
-                                    "intervaloGeneracion" to 30000L,
-                                    "maxBayas" to 15,
-                                    "bayasActuales" to 0,
-                                    "bayasUsuario" to 0
+                                    "bayasUsuario" to 0,
+                                    "pasosDesdeUltimaBaya" to 0        // Valor del paso total del sensor en la última generación de bayas
+
                                 )
                                 userDoc.set(mapOf("farm" to farmInit), SetOptions.merge()).await()
                                 Log.d("Login", "Sistema de farmeo inicializado.")
@@ -181,6 +180,7 @@ class LoginFragment : Fragment() {
                                     nivel = (it["nivel"] as? Long ?: 1L).toInt(),
                                     exp = (it["exp"] as? Long ?: 0L).toInt(),
                                     evolucionado = it["evolucionado"] as? Boolean ?: false
+
                                 )
                             }
 
@@ -191,9 +191,8 @@ class LoginFragment : Fragment() {
                                 token = token,
                                 pokemones = equipo,
                                 bayasUsuario = (farm["bayasUsuario"] as? Long ?: 0L).toInt(),
-                                lastHarvestedAt = (farm["lastHarvestedAt"] as? Long ?: System.currentTimeMillis()),
-                                intervaloGeneracion = (farm["intervaloGeneracion"] as? Long ?: 30000L),
-                                maxBayas = (farm["maxBayas"] as? Long ?: 15L).toInt()
+                                pasosDesdeUltimaBaya = (farm["pasosDesdeUltimaBaya"] as? Long ?: 0L).toInt(),
+                                profileImage = profileImageUrl
                             )
 
                             val db = AppDatabase.getInstance(requireContext())

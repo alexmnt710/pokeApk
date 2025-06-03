@@ -34,7 +34,6 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
 
     override fun getItemCount(): Int = pokemons.size
     internal var onSeeMoreClick: ((PokemonEntity) -> Unit)? = null
-    internal var onAgregarClick: ((PokemonEntity) -> Unit)? = null
 
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -49,5 +48,11 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.ViewHolder>() {
             onSeeMoreClick?.invoke(pokemon)
         }
     }
+    fun clear() {
+        val size = pokemons.size
+        pokemons.clear()
+        notifyItemRangeRemoved(0, size)
+    }
+
 
 }

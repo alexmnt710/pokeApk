@@ -52,7 +52,6 @@
                 android:layout_marginBottom="32dp" />
 
             <!-- Usuario -->
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -76,6 +75,33 @@
                     android:inputType="textPersonName"
                     android:hint="@string/register_username_hint" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Imagen de perfil -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Imagen de perfil"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp" />
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/user"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="imagen"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/user"
+                    android:elevation="4dp" />
+            </FrameLayout>
 
             <!-- Email -->
             <TextView
@@ -154,7 +180,6 @@
                     android:hint="@string/register_confirm_password_hint" />
             </com.google.android.material.textfield.TextInputLayout>
 
-
             <!-- Botón -->
             <Button
                 android:id="@+id/registerButton"
@@ -175,6 +200,7 @@
                 android:gravity="center"
                 android:layout_marginTop="24dp"
                 android:textColor="@color/white" />
+
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="?android:attr/progressBarStyleLarge"

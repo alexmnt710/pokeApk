@@ -12,7 +12,7 @@ import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntityConverters
 import com.pokeapp.pokeApk.data.localDatabase.model.User
 
-@Database(entities = [User::class, PokemonEntity::class], version = 5, exportSchema = false)@TypeConverters(Converters::class, PokemonEntityConverters::class)
+@Database(entities = [User::class, PokemonEntity::class], version = 7, exportSchema = false)@TypeConverters(Converters::class, PokemonEntityConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): userDao
     abstract fun pokemonDao(): PokeDao
