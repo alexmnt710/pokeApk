@@ -246,7 +246,7 @@ class TeamFragment : Fragment() {
                             }
                         } catch (e: retrofit2.HttpException) {
                             Log.e("Evolucion", "Error HTTP al intentar evolucionar: ${e.code()}")
-                            Toast.makeText(requireContext(), "No se pudo evolucionar: ${pokemonActual.name}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "${pokemonActual.name} subio de nivel", Toast.LENGTH_SHORT).show()
                         } catch (e: Exception) {
                             Log.e("Evolucion", "Error inesperado: ${e.localizedMessage}")
                             Toast.makeText(requireContext(), "Error inesperado en evolución", Toast.LENGTH_SHORT).show()

@@ -1,5 +1,6 @@
 package com.pokeapp.pokeApk.features.Register.Presentation
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -146,31 +147,61 @@ class RegisterFragment : Fragment() {
                     if (task.isSuccessful) {
                         val user = auth.currentUser
                         if (user != null) {
-                            // Ya hay sesión, puedes subir imagen y luego guardar datos
-                            uploadProfileImage(imageUri, user.uid, onSuccess = { url ->
-                                val userMap = mapOf(
-                                    "username" to username,
-                                    "email" to email,
-                                    "profileImage" to url
-                                )
+                            Log.d("Register", "Usuario creado con éxito: ${user.uid}")
+                            //redireccionar a la pantalla de inicio o login
+                            val userMap = hashMapOf(
+                                "username" to username,
+                                "email" to email,
+                                "profileImage" to "" // Inicialmente vacío, se actualizará después
+                            )
                                 saveUserToFirestore(user.uid, userMap as HashMap<String, String>)
-                            }, onError = {
-                                // Manejo de error en subida de imagen
-                            })
+                                //redireccion
+                                progressBar.visibility = View.GONE
+
+
+//                            uploadProfileImage(imageUri, user.uid, onSuccess = { url ->
+//                                val userMap = mapOf(
+//                                    "username" to username,
+//                                    "email" to email,
+//                                    //"profileImage" to url
+//                                )
+//                                saveUserToFirestore(user.uid, userMap as HashMap<String, String>)
+//                                //redireccion
+//                                findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+//                                progressBar.visibility = View.GONE
+//                                Toast.makeText(requireContext(), "Usuario Creado con exito", Toast.LENGTH_SHORT).show()
+//                            }, onError = {
+//                                // Manejo de error en subida de imagen
+//                                progressBar.visibility = View.GONE
+//                                Toast.makeText(requireContext(), "Hubo un error con la imagen", Toast.LENGTH_SHORT).show()
+//
+//
+//                            })
                         } else {
                             Log.e("Register", "Error: usuario es null tras registro exitoso.")
+                            Toast.makeText(requireContext(), "Hubo un error al crear usuario", Toast.LENGTH_SHORT).show()
+
+                            progressBar.visibility = View.GONE
+
                         }
                     } else {
-                        // Manejo de error en registro
+                        // Manejo de error especifico
+                        Log.e("Register", "Error al crear usuario: ${task.exception?.message}")
+                        Toast.makeText(requireContext(), "Error al crear usuario: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+
+                        progressBar.visibility = View.GONE
+
+
                     }
                 }
 
         }
 
         redLogin.setOnClickListener {
-            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+            findNavController().navigate(R.id.loginFragment)
         }
     }
+
 
     private fun uploadProfileImage(
         uri: Uri?,
@@ -213,7 +244,7 @@ class RegisterFragment : Fragment() {
             .set(userMap)
             .addOnSuccessListener {
                 Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                findNavController().navigate(R.id.loginFragment)
             }
             .addOnFailureListener { e ->
                 Toast.makeText(context, "Error al guardar datos: ${e.message}", Toast.LENGTH_LONG).show()
