@@ -7,22 +7,20 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.pokeapp.pokeApk.features.Login.Presentation.LoginFragment"
-        android:label="Login" >
+        android:label="Login">
         <action
             android:id="@+id/action_loginFragment_to_registerFragment"
             app:destination="@id/registerFragment" />
         <action
             android:id="@+id/action_loginFragment_to_homeFragment"
-            app:destination="@id/homeFragment"
-            app:popUpTo="@id/loginFragment"
-            app:popUpToInclusive="true" />
+            app:destination="@id/homeFragment" />
 
     </fragment>
 
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.pokeapp.pokeApk.features.Register.Presentation.RegisterFragment"
-        android:label="Register" >
+        android:label="Register">
         <action
             android:id="@+id/action_registerFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -31,8 +29,29 @@
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.pokeapp.pokeApk.features.Home.Presentation.HomeFragment"
-        android:label="Home" />
-    <action
-        android:id="@+id/action_homeFragment_to_loginFragment"
-        app:destination="@id/loginFragment" />
+        android:label="Home">
+        <action
+            android:id="@+id/action_homeFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/farmFragment"
+        android:name="com.pokeapp.pokeApk.features.Home.Presentation.views.FarmFragment"
+        android:label="Farm">
+        <action
+            android:id="@+id/action_farmFragment_to_movsFragment"
+            app:destination="@id/movsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/movsFragment"
+        android:name="com.pokeapp.pokeApk.features.Home.Presentation.views.MovsFragment"
+        android:label="Movs">
+    </fragment>
+    <fragment
+        android:id="@+id/teamFragment"
+        android:name="com.pokeapp.pokeApk.features.Home.Presentation.views.TeamFragment"
+        android:label="Team">
+    </fragment>
+
 </navigation>

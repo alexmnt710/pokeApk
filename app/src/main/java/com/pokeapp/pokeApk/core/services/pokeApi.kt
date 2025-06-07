@@ -1,5 +1,6 @@
 package com.pokeapp.pokeApk.core.services
 
+import com.pokeapp.pokeApk.data.localDatabase.model.EvolutionChainDto
 import com.pokeapp.pokeApk.data.localDatabase.model.IndexResponse
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonDetailDto
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonListResponse
@@ -32,4 +33,8 @@ interface PokeApiService {
         @Query("limit") limit: Int,
         @Query("offset") offset: Int = 0
     ): PokemonListResponse
+
+    @GET("evolution-chain/{id}")
+    suspend fun getEvolutionChain(@Path("id") id: Int): EvolutionChainDto
+
 }

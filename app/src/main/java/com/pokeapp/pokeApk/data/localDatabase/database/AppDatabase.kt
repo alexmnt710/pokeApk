@@ -9,9 +9,10 @@ import com.pokeapp.pokeApk.data.localDatabase.dao.PokeDao
 import com.pokeapp.pokeApk.data.localDatabase.dao.userDao
 import com.pokeapp.pokeApk.data.localDatabase.model.Converters
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
+import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntityConverters
 import com.pokeapp.pokeApk.data.localDatabase.model.User
 
-@Database(entities = [User::class, PokemonEntity::class], version = 2, exportSchema = false)@TypeConverters(Converters::class)
+@Database(entities = [User::class, PokemonEntity::class], version = 7, exportSchema = false)@TypeConverters(Converters::class, PokemonEntityConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): userDao
     abstract fun pokemonDao(): PokeDao

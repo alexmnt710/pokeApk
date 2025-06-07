@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/item_username"
+        android:title="Usuario"
+        android:enabled="false" />
+    <item
+        android:id="@+id/item_email"
+        android:title="Correo"
+        android:enabled="false" />
+
+    <item
+        android:id="@+id/item_logout"
+        android:title="Cerrar sesión" />
+</menu>
+

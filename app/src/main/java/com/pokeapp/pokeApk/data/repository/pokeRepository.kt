@@ -5,11 +5,12 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.pokeapp.pokeApk.core.services.PokeApiService
 import com.pokeapp.pokeApk.data.localDatabase.dao.PokeDao
+import com.pokeapp.pokeApk.data.localDatabase.model.EvolutionChainDto
 import com.pokeapp.pokeApk.data.localDatabase.model.PokemonEntity
 import kotlinx.coroutines.flow.Flow
 
 class PokeRepository(
-    private val api: PokeApiService,
+    internal val api: PokeApiService,
     private val dao: PokeDao
 ) {
 
@@ -31,23 +32,36 @@ class PokeRepository(
     suspend fun getPokemon(id: Int): PokemonEntity {
         dao.find(id)?.let { if (it.spriteUrl != null) return it }
 
-        val detail  = api.getPokemon(id)
-        val species = api.getSpecies(id)
+        val detail = api.getPokemon(id)
 
-        val spanish = species.flavorTextEntries
-            .firstOrNull { it.language.name == "es" }?.text
-            ?.replace("\n", " ")?.replace("\u000c", " ")
+        val species = try {
+            api.getSpecies(id)
+        } catch (e: retrofit2.HttpException) {
+            if (e.code() == 404) {
+                null // Forma alterna, no tiene especie propia
+            } else {
+                throw e
+            }
+        }
+
+        val spanish = species?.flavorTextEntries
+            ?.firstOrNull { it.language.name == "es" }
+            ?.text
+            ?.replace("\n", " ")
+            ?.replace("\u000c", " ")
 
         val entity = PokemonEntity(
-            id   = detail.id,
+            id = detail.id,
             name = detail.name,
             spriteUrl = detail.sprites.other.officialArtwork.url,
             types = detail.types.sortedBy { it.slot }.map { it.type.name },
-            description = spanish
+            description = spanish ?: "Descripción no disponible para esta forma."
         )
+
         dao.insert(entity)
         return entity
     }
+
 
     fun getAllLocal(): Flow<PagingData<PokemonEntity>> {
         return Pager(
@@ -55,6 +69,34 @@ class PokeRepository(
             pagingSourceFactory = { dao.pagingSource() }
         ).flow
     }
+
+    suspend fun puedeEvolucionar(pokemonId: Int): Int? {
+        val species = api.getSpecies(pokemonId)
+        val evolutionChainUrl = species.evolutionChain.url
+        val evolutionId = evolutionChainUrl.trimEnd('/').split("/").last().toInt()
+        val chain = api.getEvolutionChain(evolutionId)
+
+        fun encontrarEvolucion(cadena: EvolutionChainDto.Chain, objetivo: String): EvolutionChainDto.Chain? {
+            if (cadena.species.name == objetivo) return cadena
+            for (rama in cadena.evolvesTo) {
+                val encontrada = encontrarEvolucion(rama, objetivo)
+                if (encontrada != null) return encontrada
+            }
+            return null
+        }
+
+        val speciesDetail = api.getPokemon(pokemonId)
+        val nodo = encontrarEvolucion(chain.chain, speciesDetail.name)
+        val siguiente = nodo?.evolvesTo?.firstOrNull()?.species?.url ?: return null
+
+        return siguiente.trimEnd('/').split("/").last().toInt()
+    }
+    suspend fun getIdByName(name: String): Int? {
+        val response = api.getIndex(100_000)
+        return response.results.firstOrNull { it.name == name.lowercase() }
+            ?.url?.trimEnd('/')?.split("/")?.last()?.toInt()
+    }
+
 
 }
 
