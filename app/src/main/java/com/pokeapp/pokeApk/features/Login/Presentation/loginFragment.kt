@@ -2,11 +2,13 @@ package com.pokeapp.pokeApk.features.Login.Presentation
 
 import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -113,6 +115,10 @@ class LoginFragment : Fragment() {
 
         //Se asigna el evento al boton
         btnLogin.setOnClickListener {
+
+            // Ocultar el teclado
+            hideKeyboard()
+
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
             //validar los campos
@@ -229,6 +235,16 @@ class LoginFragment : Fragment() {
 
 
         }
+    private fun hideKeyboard() {
+        // Obtiene la vista actualmente enfocada
+        val view = requireActivity().currentFocus
+        if (view != null) {
+            // Obtén el InputMethodManager a partir del contexto de la actividad
+            val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            // Oculta el teclado a partir del token de la ventana de la vista
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+    }
 
     }
 
