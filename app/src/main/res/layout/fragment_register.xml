@@ -87,8 +87,9 @@
                 android:layout_marginBottom="8dp" />
 
             <FrameLayout
-                android:layout_width="120dp"
-                android:layout_height="120dp">
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="16dp">
 
                 <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/profileImage"
@@ -96,11 +97,11 @@
                     android:layout_height="match_parent"
                     android:src="@drawable/user"
                     android:scaleType="centerCrop"
-                    android:contentDescription="imagen"
+                    android:contentDescription="Imagen de perfil"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="@drawable/user"
-                    android:elevation="4dp" />
+                    android:elevation="4dp"/>
+
             </FrameLayout>
 
             <!-- Email -->

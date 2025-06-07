@@ -343,36 +343,45 @@ class HomeFragment : Fragment() {
                 Log.d("User", "Profile Image: ${user.profileImage}")
 
 
-                btnUserMenu.setOnClickListener {
-                    val popupMenu = PopupMenu(requireContext(), btnUserMenu)
-                    popupMenu.menuInflater.inflate(R.menu.user_menu, popupMenu.menu)
+                    user?.let {
+                        // Supongamos que user tiene un campo profileImageUrl
+                        val profileImageUrl = user.profileImage ?: ""
 
+                        Glide.with(this@HomeFragment)
+                            .load(profileImageUrl)
+                            .placeholder(R.drawable.user)
+                            .error(R.drawable.user)
+                            .circleCrop()
+                            .into(btnUserMenu)
 
-                    // Personalizar con datos del usuario
-                    popupMenu.menu.findItem(R.id.item_username).title = "Usuario: ${user.username}"
-                    popupMenu.menu.findItem(R.id.item_email).title = "Correo: ${user.email}"
-
-                    popupMenu.setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.item_logout -> {
-                                lifecycleScope.launch {
-                                    withContext(Dispatchers.IO) {
-                                        AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
+                        btnUserMenu.setOnClickListener {
+                            val popup = PopupMenu(requireContext(), btnUserMenu)
+                            popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
+                            popup.menu.findItem(R.id.item_username).title = "Usuario: ${user.username}"
+                            popup.menu.findItem(R.id.item_email).title = "Correo: ${user.email}"
+                            popup.setOnMenuItemClickListener { item ->
+                                when (item.itemId) {
+                                    R.id.item_logout -> {
+                                        lifecycleScope.launch {
+                                            withContext(Dispatchers.IO) {
+                                                AppDatabase.getInstance(requireContext()).usuarioDao().eliminarUsuario()
+                                            }
+                                            Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                                            findNavController().navigate(
+                                                R.id.loginFragment,
+                                                null,
+                                                NavOptions.Builder().setPopUpTo(R.id.farmFragment, true).build()
+                                            )
+                                        }
+                                        true
                                     }
-                                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-                                    findNavController().navigate(
-                                        R.id.action_homeFragment_to_loginFragment, null,
-                                        NavOptions.Builder().setPopUpTo(R.id.homeFragment, true).build()
-                                    )
+                                    else -> false
                                 }
-                                true
                             }
-                            else -> false
+                            popup.show()
                         }
                     }
 
-                    popupMenu.show()
-                }
                 val btnPokemon = view?.findViewById<ImageButton>(R.id.btnPokeball)
                 btnPokemon?.setOnClickListener {
                     findNavController().navigate(R.id.teamFragment)

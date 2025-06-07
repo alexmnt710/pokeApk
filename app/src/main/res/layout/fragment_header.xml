@@ -8,7 +8,7 @@
     <ImageView
         android:id="@+id/imgLogoPokemon"
         android:layout_width="155dp"
-        android:layout_height="49dp"
+        android:layout_height="58dp"
         android:contentDescription="Logo de PokeApp"
         android:scaleType="fitCenter"
         android:src="@drawable/logo"
@@ -17,13 +17,13 @@
 
     <ImageButton
         android:id="@+id/btnUserMenu"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="65dp"
+        android:layout_height="65dp"
         android:background="@drawable/circular_background"
         android:contentDescription="Menú de usuario"
-        android:padding="8dp"
-        android:scaleType="centerInside"
-        android:src="@drawable/user"
+        android:padding="1dp"
+        android:scaleType="fitXY"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

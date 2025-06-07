@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.pokeapp.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -97,6 +98,16 @@ class FarmFragment : Fragment(), SensorEventListener {
             }
 
             user?.let {
+                // Supongamos que user tiene un campo profileImageUrl
+                val profileImageUrl = user.profileImage ?: ""
+
+                Glide.with(this@FarmFragment)
+                    .load(profileImageUrl)
+                    .placeholder(R.drawable.user)
+                    .error(R.drawable.user)
+                    .circleCrop()
+                    .into(btnUserMenu)
+
                 btnUserMenu.setOnClickListener {
                     val popup = PopupMenu(requireContext(), btnUserMenu)
                     popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
@@ -134,6 +145,7 @@ class FarmFragment : Fragment(), SensorEventListener {
             findNavController().navigate(R.id.teamFragment)
         }
     }
+
 
     private fun obtenerImagenArbolPorBayas(bayasEnArbol: Int): Int {
         return when (bayasEnArbol) {
